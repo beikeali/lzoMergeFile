@@ -55,6 +55,13 @@ public class Driver {
 			 fs.delete(tmpPath, true);
 		     logger.warn("delete existing tmpPath dir : " + tmpPath);
 		 }
+		 //给原始目录数据加lzo索引
+		 LzoIndexer index = new LzoIndexer(conf);
+		 try {
+			 index.index(inPath);
+		 } catch (IOException e) {
+			 e.printStackTrace();
+		 }
 		 // 配置并运行job，解决lzo文件合并的job
 		 Job job = new Job(conf, jobName);
 		 job.setJarByClass(LzoFileMergeMapper.class);
@@ -72,7 +79,7 @@ public class Driver {
 		 TextOutputFormat.setCompressOutput(job, true);
 		 TextOutputFormat.setOutputCompressorClass(job, LzopCodec.class);
 		 // 设置reduce 这里的作用是用于控制最后输出文件的个数，避免小文件太多
-		 job.setReducerClass(LzoFileMergeReducer.class);
+		 //job.setReducerClass(LzoFileMergeReducer.class);
 		 // 设置reduce输出到临时路径
 		 TextOutputFormat.setOutputPath(job, tmpPath);
 		 //计算输入map数据量,兼容用户输入目录格式不为/*结尾的情况
@@ -100,6 +107,12 @@ public class Driver {
 		 job.setNumReduceTasks(reduceTaskNum);
 		 job.waitForCompletion(true);
 		 
+		 try {
+			 index.index(tmpPath);
+		 } catch (IOException e) {
+			 e.printStackTrace();
+		 }
+		 
 		 // 配置并运行job2，将合并好的数据从临时目录中写入到目标目录中（即原始的输入目录）
 		 Job job2 = new Job(conf, jobName);
 		 job2.setJarByClass(LzoFileMergeMapper.class);
@@ -117,7 +130,7 @@ public class Driver {
 		 TextOutputFormat.setCompressOutput(job2, true);
 		 TextOutputFormat.setOutputCompressorClass(job2, LzopCodec.class);
 		 // 设置reduce 这里的作用是用于控制最后输出文件的个数，避免小文件太多
-		 job2.setReducerClass(LzoFileMergeReducer.class);
+		 //job2.setReducerClass(LzoFileMergeReducer.class);
 		 // 设置reduce输出到临时路径
 		 TextOutputFormat.setOutputPath(job2, inPath);
 		 job2.setNumReduceTasks(reduceTaskNum);
@@ -138,7 +151,7 @@ public class Driver {
 			     //fs.mkdirs(tmpPath);
 			 }
 			 
-			 LzoIndexer index = new LzoIndexer(conf);
+			 //LzoIndexer index = new LzoIndexer(conf);
 			 try {
 				 index.index(inPath);
 			 } catch (IOException e) {
